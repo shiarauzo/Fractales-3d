@@ -1,0 +1,113 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: #e9e9e9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+
+#gl {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  cursor: crosshair;
+}
+
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  max-width: min(560px, 92vw);
+}
+
+/* Modos del HUD: full (todo) → compact (solo nombre + badges) → hidden (nada) */
+#hud.mode-hidden { display: none; }
+#hud.mode-compact .hint { display: none; }
+#hud.mode-compact label,
+#hud.mode-compact input { display: none; }
+
+#hud .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  pointer-events: auto;
+}
+
+#hud.mode-compact .row { margin-bottom: 0; }
+#hud.mode-compact { padding: 6px 10px; }
+
+#hud .badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #cfd;
+  margin-left: 4px;
+}
+
+#hud label { color: #9ad; }
+
+#hud input[type="number"] {
+  width: 64px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+#hud #fractalName {
+  color: #fff;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+#hud .hint {
+  color: #bbb;
+  font-size: 11px;
+}
+
+#hud kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+  color: #fff;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.overlay.hidden { display: none; }
