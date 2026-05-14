@@ -59,6 +59,7 @@ export function createRenderer(canvas) {
     uFocal:       gl.getUniformLocation(program, 'uFocal'),
     uFractalId:   gl.getUniformLocation(program, 'uFractalId'),
     uMaxIter:     gl.getUniformLocation(program, 'uMaxIter'),
+    uMaxSteps:    gl.getUniformLocation(program, 'uMaxSteps'),
     uFogDensity:  gl.getUniformLocation(program, 'uFogDensity'),
     uPaletteSeed: gl.getUniformLocation(program, 'uPaletteSeed')
   };
@@ -94,6 +95,7 @@ export function createRenderer(canvas) {
     gl.uniform1f(uniforms.uFocal, state.focal);
     gl.uniform1i(uniforms.uFractalId, state.fractalId);
     gl.uniform1i(uniforms.uMaxIter, state.maxIter);
+    gl.uniform1i(uniforms.uMaxSteps, state.maxSteps);
     gl.uniform1f(uniforms.uFogDensity, state.fogDensity);
     gl.uniform3fv(uniforms.uPaletteSeed, state.paletteSeed);
 

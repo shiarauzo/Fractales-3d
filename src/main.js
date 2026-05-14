@@ -5,7 +5,15 @@ import { createUI } from './ui.js';
 import { getFractal } from './fractals.js';
 
 const MOUSE_SENSITIVITY = 0.0022;
-const BASE_MOVE_SPEED   = 1.4; // unidades por segundo
+const BASE_MOVE_SPEED   = 1.4;
+
+// Niveles de calidad: índice 0=Q1 bajo, 1=Q2 medio (default), 2=Q3 alto.
+const QUALITY_LEVELS = [
+  { label: 'Q1', pixelRatio: 0.65, maxSteps: 96 },
+  { label: 'Q2', pixelRatio: 1.0,  maxSteps: 160 },
+  { label: 'Q3', pixelRatio: 1.25, maxSteps: 220 }
+];
+let qualityIdx = 1;
 
 const canvas = document.getElementById('gl');
 
@@ -25,17 +33,22 @@ const camera = createCamera([0, 0, 2.4]);
 let currentFractal = getFractal(1);
 camera.setPosition(currentFractal.defaultPos);
 
+function applyQuality() {
+  const q = QUALITY_LEVELS[qualityIdx];
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.pixelRatio));
+  ui.setQuality(q.label);
+}
+
 const ui = createUI({
-  onChange: (f) => {
-    currentFractal = f;
-    camera.reset(f.defaultPos);
-  }
+  // Cambiar fractal NO reposiciona la cámara — el usuario usa R para resetear.
+  onChange: (f) => { currentFractal = f; }
 });
 ui.setIndex(1);
+applyQuality();
 
 const input = createInput(canvas, {
   onKey: (code) => {
-    if (code === 'KeyH') ui.toggleHidden();
+    if (code === 'KeyH') ui.cycleHud();
     if (code === 'KeyR') camera.reset(currentFractal.defaultPos);
     if (code === 'NumpadAdd' || code === 'Equal' || code === 'BracketRight') {
       ui.setIndex(ui.getIndex() + 1);
@@ -43,9 +56,15 @@ const input = createInput(canvas, {
     if (code === 'NumpadSubtract' || code === 'Minus' || code === 'BracketLeft') {
       ui.setIndex(ui.getIndex() - 1);
     }
+    if (code === 'Digit1' || code === 'Numpad1') { qualityIdx = 0; applyQuality(); }
+    if (code === 'Digit2' || code === 'Numpad2') { qualityIdx = 1; applyQuality(); }
+    if (code === 'Digit3' || code === 'Numpad3') { qualityIdx = 2; applyQuality(); }
   },
-  onLockChange: (locked) => ui.setLockState(locked)
+  onLockChange: (locked) => ui.setLockState(locked),
+  onSpeed: (mult) => ui.setSpeed(mult)
 });
+
+ui.setSpeed(input.getSpeedMultiplier());
 
 window.addEventListener('resize', () => renderer.resize());
 document.addEventListener('visibilitychange', () => {
@@ -59,13 +78,11 @@ function frame(now) {
   lastFrame = now;
   const dt = dtMs / 1000;
 
-  // Mouse → rotación de cámara (sólo si pointer lock activo)
   const { dx, dy } = input.consumeMouseDelta();
   if (input.isLocked() && (dx !== 0 || dy !== 0)) {
     camera.rotate(dx * MOUSE_SENSITIVITY, -dy * MOUSE_SENSITIVITY);
   }
 
-  // Teclado → movimiento
   const speed = BASE_MOVE_SPEED * input.getSpeedMultiplier() * dt;
   let f = 0, r = 0, u = 0;
   if (input.keys.has('KeyW') || input.keys.has('ArrowUp'))    f += 1;
@@ -85,6 +102,7 @@ function frame(now) {
     focal:      camera.focal(),
     fractalId:  currentFractal.id,
     maxIter:    currentFractal.maxIter,
+    maxSteps:   QUALITY_LEVELS[qualityIdx].maxSteps,
     fogDensity: currentFractal.fogDensity,
     paletteSeed: currentFractal.paletteSeed
   });

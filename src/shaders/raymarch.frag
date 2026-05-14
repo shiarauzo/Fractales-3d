@@ -15,8 +15,9 @@ uniform int   uFractalId;   // 0..9
 uniform int   uMaxIter;
 uniform float uFogDensity;
 uniform vec3  uPaletteSeed;
+uniform int   uMaxSteps;    // configurable por nivel de calidad
 
-const int   MAX_STEPS = 160;
+const int   MAX_STEPS_CAP = 256;
 const float MAX_DIST  = 80.0;
 const float MIN_DIST  = 0.0008;
 
@@ -261,7 +262,8 @@ void main() {
   float t = 0.0;
   int iSteps = 0;
   bool hit = false;
-  for (int i = 0; i < MAX_STEPS; i++) {
+  for (int i = 0; i < MAX_STEPS_CAP; i++) {
+    if (i >= uMaxSteps) break;
     iSteps = i;
     vec3 p = ro + rd * t;
     float d = mapDE(p);
@@ -277,7 +279,7 @@ void main() {
     vec3 n = calcNormal(p);
     vec3 lightDir = normalize(vec3(0.6, 0.8, -0.4));
     float diff = clamp(dot(n, lightDir), 0.0, 1.0);
-    float ao = 1.0 - float(iSteps) / float(MAX_STEPS);
+    float ao = 1.0 - float(iSteps) / float(uMaxSteps);
     ao = clamp(ao, 0.0, 1.0);
     float rim = pow(1.0 - max(dot(n, -rd), 0.0), 2.0);
 

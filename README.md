@@ -42,8 +42,9 @@ Abre la URL que muestra Vite (típicamente `http://localhost:5173`). Click sobre
 | Subir / bajar | `Space` / `Shift` |
 | Cambiar velocidad | Scroll |
 | Cambiar fractal | input numérico, o `+` / `-` |
+| Calidad | `1` (baja) / `2` (media) / `3` (alta) |
 | Resetear cámara | `R` |
-| Ocultar HUD | `H` |
+| Ciclar HUD (full / compact / hidden) | `H` |
 
 ## Configurar fractal
 

@@ -36,7 +36,11 @@ html, body {
   max-width: min(560px, 92vw);
 }
 
-#hud.hidden { display: none; }
+/* Modos del HUD: full (todo) → compact (solo nombre + badges) → hidden (nada) */
+#hud.mode-hidden { display: none; }
+#hud.mode-compact .hint { display: none; }
+#hud.mode-compact label,
+#hud.mode-compact input { display: none; }
 
 #hud .row {
   display: flex;
@@ -44,6 +48,19 @@ html, body {
   gap: 8px;
   margin-bottom: 6px;
   pointer-events: auto;
+}
+
+#hud.mode-compact .row { margin-bottom: 0; }
+#hud.mode-compact { padding: 6px 10px; }
+
+#hud .badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #cfd;
+  margin-left: 4px;
 }
 
 #hud label { color: #9ad; }

@@ -34,6 +34,8 @@ export function createInput(canvas, callbacks = {}) {
   }
 
   function onWheel(e) {
+    // Solo consumimos el scroll cuando el usuario está "en el juego".
+    if (!locked) return;
     e.preventDefault();
     const factor = Math.exp(-e.deltaY * 0.001);
     speedMultiplier = Math.max(0.05, Math.min(50, speedMultiplier * factor));
@@ -41,11 +43,19 @@ export function createInput(canvas, callbacks = {}) {
   }
 
   function onClick() {
-    if (!locked) {
-      const p = canvas.requestPointerLock?.();
-      if (p && typeof p.then === 'function') {
-        p.catch(() => { /* algunos navegadores rechazan si no es gesto */ });
-      }
+    if (locked) return;
+    let p;
+    try {
+      // unadjustedMovement evita aceleración del SO en Chrome 88+.
+      p = canvas.requestPointerLock?.({ unadjustedMovement: true });
+    } catch (_) {
+      p = canvas.requestPointerLock?.();
+    }
+    if (p && typeof p.then === 'function') {
+      p.catch(() => {
+        // Fallback: reintenta sin opciones (Safari, Firefox antiguos).
+        try { canvas.requestPointerLock?.(); } catch (_) { /* noop */ }
+      });
     }
   }
 
