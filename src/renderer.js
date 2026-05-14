@@ -1,5 +1,6 @@
 import vertSrc from './shaders/fullscreen.vert?raw';
 import fragSrc from './shaders/raymarch.frag?raw';
+import bloomSrc from './shaders/bloom.frag?raw';
 
 function compile(gl, type, src) {
   const sh = gl.createShader(type);
@@ -42,8 +43,11 @@ export function createRenderer(canvas) {
     throw new Error('WebGL2 no está disponible en este navegador.');
   }
 
+  // Main fractal program
   const program = linkProgram(gl, vertSrc, fragSrc);
-  gl.useProgram(program);
+
+  // Bloom post-process program
+  const bloomProgram = linkProgram(gl, vertSrc, bloomSrc);
 
   // VAO vacío: el vertex shader genera un triángulo a partir de gl_VertexID.
   const vao = gl.createVertexArray();
@@ -64,7 +68,59 @@ export function createRenderer(canvas) {
     uPaletteSeed: gl.getUniformLocation(program, 'uPaletteSeed')
   };
 
+  const bloomUniforms = {
+    uScene:      gl.getUniformLocation(bloomProgram, 'uScene'),
+    uBloom:      gl.getUniformLocation(bloomProgram, 'uBloom'),
+    uResolution: gl.getUniformLocation(bloomProgram, 'uResolution'),
+    uPass:       gl.getUniformLocation(bloomProgram, 'uPass')
+  };
+
   let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
+
+  // Framebuffers for bloom
+  let fboScene, fboBloom1, fboBloom2;
+  let texScene, texBloom1, texBloom2;
+  let fboWidth = 0, fboHeight = 0;
+
+  function createFBO(width, height) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+
+    return { fbo, tex };
+  }
+
+  function resizeFBOs(w, h) {
+    if (w === fboWidth && h === fboHeight) return;
+    fboWidth = w;
+    fboHeight = h;
+
+    // Cleanup old
+    if (texScene) gl.deleteTexture(texScene);
+    if (texBloom1) gl.deleteTexture(texBloom1);
+    if (texBloom2) gl.deleteTexture(texBloom2);
+    if (fboScene) gl.deleteFramebuffer(fboScene);
+    if (fboBloom1) gl.deleteFramebuffer(fboBloom1);
+    if (fboBloom2) gl.deleteFramebuffer(fboBloom2);
+
+    // Create new - bloom buffers at half res for performance
+    const bloomW = Math.floor(w / 2);
+    const bloomH = Math.floor(h / 2);
+
+    ({ fbo: fboScene, tex: texScene } = createFBO(w, h));
+    ({ fbo: fboBloom1, tex: texBloom1 } = createFBO(bloomW, bloomH));
+    ({ fbo: fboBloom2, tex: texBloom2 } = createFBO(bloomW, bloomH));
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
 
   function resize() {
     const w = Math.floor(canvas.clientWidth * pixelRatio);
@@ -73,20 +129,28 @@ export function createRenderer(canvas) {
       canvas.width = w;
       canvas.height = h;
     }
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    resizeFBOs(w, h);
   }
 
   function setPixelRatio(r) {
     pixelRatio = Math.max(0.25, Math.min(2.0, r));
-    resize();
   }
 
   function render(state) {
     resize();
-    gl.useProgram(program);
     gl.bindVertexArray(vao);
 
-    gl.uniform2f(uniforms.uResolution, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+    const bloomW = Math.floor(w / 2);
+    const bloomH = Math.floor(h / 2);
+
+    // Pass 1: Render fractal to FBO
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboScene);
+    gl.viewport(0, 0, w, h);
+    gl.useProgram(program);
+
+    gl.uniform2f(uniforms.uResolution, w, h);
     gl.uniform1f(uniforms.uTime, state.time);
     gl.uniform3fv(uniforms.uCamPos, state.camPos);
     gl.uniform3fv(uniforms.uCamForward, state.camForward);
@@ -98,6 +162,50 @@ export function createRenderer(canvas) {
     gl.uniform1i(uniforms.uMaxSteps, state.maxSteps);
     gl.uniform1f(uniforms.uFogDensity, state.fogDensity);
     gl.uniform3fv(uniforms.uPaletteSeed, state.paletteSeed);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Pass 2: Extract bright pixels
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboBloom1);
+    gl.viewport(0, 0, bloomW, bloomH);
+    gl.useProgram(bloomProgram);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texScene);
+    gl.uniform1i(bloomUniforms.uScene, 0);
+    gl.uniform2f(bloomUniforms.uResolution, bloomW, bloomH);
+    gl.uniform1i(bloomUniforms.uPass, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Pass 3: Horizontal blur
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboBloom2);
+    gl.bindTexture(gl.TEXTURE_2D, texBloom1);
+    gl.uniform1i(bloomUniforms.uPass, 1);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Pass 4: Vertical blur
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboBloom1);
+    gl.bindTexture(gl.TEXTURE_2D, texBloom2);
+    gl.uniform1i(bloomUniforms.uPass, 2);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Pass 5: Composite to screen
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, w, h);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texScene);
+    gl.uniform1i(bloomUniforms.uScene, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texBloom1);
+    gl.uniform1i(bloomUniforms.uBloom, 1);
+
+    gl.uniform2f(bloomUniforms.uResolution, w, h);
+    gl.uniform1i(bloomUniforms.uPass, 3);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
