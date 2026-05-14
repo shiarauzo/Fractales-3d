@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fractales 3D</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <canvas id="gl"></canvas>
+
+    <div id="hud">
+      <div class="row">
+        <label for="fractalIdx">Fractal #</label>
+        <input id="fractalIdx" type="number" min="1" max="10" value="1" />
+        <span id="fractalName">—</span>
+      </div>
+      <div class="hint">
+        <kbd>Click</kbd> capturar mouse ·
+        <kbd>WASD</kbd> mover ·
+        <kbd>Space</kbd>/<kbd>Shift</kbd> subir/bajar ·
+        <kbd>Scroll</kbd> velocidad ·
+        <kbd>+</kbd>/<kbd>-</kbd> fractal ·
+        <kbd>R</kbd> reset cámara ·
+        <kbd>H</kbd> ocultar
+      </div>
+    </div>
+
+    <div id="lockOverlay" class="overlay hidden">
+      <div>Click para entrar · Esc para salir</div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
