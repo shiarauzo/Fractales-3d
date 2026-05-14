@@ -11,7 +11,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 2.4],
     maxIter: 10,
     fogDensity: 0.08,
-    paletteSeed: [0.55, 0.75, 0.85]  // cyan-teal
+    paletteSeed: [0.55, 0.75, 0.85],
+    formula: 'z = z^8 + c  (esférico)'
   },
   {
     id: 1,
@@ -19,7 +20,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 6.5],
     maxIter: 14,
     fogDensity: 0.05,
-    paletteSeed: [0.05, 0.25, 0.45]  // coral-orange
+    paletteSeed: [0.05, 0.25, 0.45],
+    formula: 'z = s·ballFold(boxFold(z)) + c'
   },
   {
     id: 2,
@@ -27,7 +29,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 2.2],
     maxIter: 11,
     fogDensity: 0.09,
-    paletteSeed: [0.85, 0.55, 0.75]  // pink-magenta
+    paletteSeed: [0.85, 0.55, 0.75],
+    formula: 'q = q² + c  (4D quaternion)'
   },
   {
     id: 3,
@@ -35,7 +38,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 3.0],
     maxIter: 14,
     fogDensity: 0.06,
-    paletteSeed: [0.35, 0.65, 0.55]  // teal-green
+    paletteSeed: [0.35, 0.65, 0.55],
+    formula: 'z = 2·fold(z) - 1  (KIFS)'
   },
   {
     id: 4,
@@ -43,7 +47,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 3.2],
     maxIter: 6,
     fogDensity: 0.06,
-    paletteSeed: [0.15, 0.35, 0.55]  // warm coral
+    paletteSeed: [0.15, 0.35, 0.55],
+    formula: 'cross(mod(z,2)-1) / 3^n'
   },
   {
     id: 5,
@@ -51,7 +56,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 2.6],
     maxIter: 8,
     fogDensity: 0.12,
-    paletteSeed: [0.45, 0.70, 0.80]  // aqua-cyan
+    paletteSeed: [0.45, 0.70, 0.80],
+    formula: 'z = k·fract(z+½)-½  (inversión)'
   },
   {
     id: 6,
@@ -59,7 +65,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 4.8],
     maxIter: 12,
     fogDensity: 0.07,
-    paletteSeed: [0.75, 0.50, 0.85]  // lavender-pink
+    paletteSeed: [0.75, 0.50, 0.85],
+    formula: 'z = k·clamp(z) - z  (Möbius)'
   },
   {
     id: 7,
@@ -67,7 +74,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 6.0],
     maxIter: 14,
     fogDensity: 0.05,
-    paletteSeed: [0.50, 0.75, 0.90]  // sky-cyan
+    paletteSeed: [0.50, 0.75, 0.90],
+    formula: 'z = s·sphereFold(boxFold(z)) + c'
   },
   {
     id: 8,
@@ -75,7 +83,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 2.4],
     maxIter: 12,
     fogDensity: 0.08,
-    paletteSeed: [0.10, 0.30, 0.50]  // amber-coral
+    paletteSeed: [0.10, 0.30, 0.50],
+    formula: 'z = z² + c  (esférico)'
   },
   {
     id: 9,
@@ -83,7 +92,8 @@ export const FRACTALS = [
     defaultPos: [0.0, 0.0, 3.4],
     maxIter: 10,
     fogDensity: 0.06,
-    paletteSeed: [0.40, 0.60, 0.70]  // seafoam
+    paletteSeed: [0.40, 0.60, 0.70],
+    formula: 'z = 2·abs(sort(z)) - 1'
   }
 ];
 

@@ -2,13 +2,17 @@ import { FRACTALS, FRACTAL_COUNT, getFractal } from './fractals.js';
 
 const HUD_MODES = ['full', 'compact', 'hidden'];
 
-export function createUI({ onChange }) {
+export function createUI({ onChange, onZoom }) {
   const hud = document.getElementById('hud');
   const input = document.getElementById('fractalIdx');
   const nameEl = document.getElementById('fractalName');
   const speedEl = document.getElementById('speedMultiplier');
   const qualityEl = document.getElementById('qualityLevel');
   const overlay = document.getElementById('lockOverlay');
+  const formulaEl = document.getElementById('formulaText');
+  const fovEl = document.getElementById('fovValue');
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomOutBtn = document.getElementById('zoomOut');
 
   input.min = '1';
   input.max = String(FRACTAL_COUNT);
@@ -25,6 +29,7 @@ export function createUI({ onChange }) {
     input.value = String(clamped);
     const f = getFractal(clamped);
     nameEl.textContent = f.name;
+    if (formulaEl) formulaEl.textContent = f.formula || '';
     onChange(f);
     if (document.activeElement === input) input.blur();
   }
@@ -50,6 +55,18 @@ export function createUI({ onChange }) {
     if (qualityEl) qualityEl.textContent = label;
   }
 
+  function setFov(value) {
+    if (fovEl) fovEl.textContent = value.toFixed(1);
+  }
+
+  // Zoom button handlers
+  if (zoomInBtn && onZoom) {
+    zoomInBtn.addEventListener('click', () => onZoom(0.1));
+  }
+  if (zoomOutBtn && onZoom) {
+    zoomOutBtn.addEventListener('click', () => onZoom(-0.1));
+  }
+
   overlay.classList.remove('hidden');
 
   return {
@@ -58,6 +75,7 @@ export function createUI({ onChange }) {
     setLockState,
     setSpeed,
     setQuality,
+    setFov,
     getIndex: () => Number(input.value),
     count: FRACTAL_COUNT,
     list: FRACTALS
