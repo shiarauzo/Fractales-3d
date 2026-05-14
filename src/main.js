@@ -15,6 +15,16 @@ const QUALITY_LEVELS = [
 ];
 let qualityIdx = 1;
 
+// Progressive rendering: baja calidad al moverse, sube gradualmente al parar
+const PROGRESSIVE = {
+  movingRatio: 0.4,    // pixel ratio mientras te mueves
+  settleTime: 150,     // ms para empezar a subir calidad
+  rampSpeed: 2.5       // velocidad de subida (ratio/segundo)
+};
+let isMoving = false;
+let stillSince = 0;
+let currentProgressiveRatio = 1.0;
+
 const canvas = document.getElementById('gl');
 
 let renderer;
@@ -93,6 +103,32 @@ function frame(now) {
   if (input.keys.has('ShiftLeft') || input.keys.has('ShiftRight')) u -= 1;
   if (f || r || u) camera.move(f * speed, r * speed, u * speed);
 
+  // Progressive rendering: detectar movimiento
+  const wasMoving = isMoving;
+  isMoving = (f !== 0 || r !== 0 || u !== 0 || dx !== 0 || dy !== 0);
+
+  if (isMoving) {
+    stillSince = now;
+    currentProgressiveRatio = PROGRESSIVE.movingRatio;
+  } else {
+    const stillTime = now - stillSince;
+    if (stillTime > PROGRESSIVE.settleTime) {
+      // Rampa gradual hacia la calidad objetivo
+      const targetRatio = QUALITY_LEVELS[qualityIdx].pixelRatio;
+      currentProgressiveRatio = Math.min(
+        targetRatio,
+        currentProgressiveRatio + PROGRESSIVE.rampSpeed * dt
+      );
+    }
+  }
+
+  // Aplicar ratio progresivo
+  const effectiveRatio = Math.min(
+    window.devicePixelRatio || 1,
+    currentProgressiveRatio
+  );
+  renderer.setPixelRatio(effectiveRatio);
+
   renderer.render({
     time: now * 0.001,
     camPos:     camera.state.position,
@@ -102,7 +138,7 @@ function frame(now) {
     focal:      camera.focal(),
     fractalId:  currentFractal.id,
     maxIter:    currentFractal.maxIter,
-    maxSteps:   QUALITY_LEVELS[qualityIdx].maxSteps,
+    maxSteps:   isMoving ? Math.floor(QUALITY_LEVELS[qualityIdx].maxSteps * 0.6) : QUALITY_LEVELS[qualityIdx].maxSteps,
     fogDensity: currentFractal.fogDensity,
     paletteSeed: currentFractal.paletteSeed
   });
