@@ -77,6 +77,10 @@ export function createRenderer(canvas) {
 
   let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
 
+  // Enable float texture extension for bloom
+  const extColorFloat = gl.getExtension('EXT_color_buffer_float');
+  const useFloatTextures = !!extColorFloat;
+
   // Framebuffers for bloom
   let fboScene, fboBloom1, fboBloom2;
   let texScene, texBloom1, texBloom2;
@@ -85,7 +89,14 @@ export function createRenderer(canvas) {
   function createFBO(width, height) {
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+
+    // Use float textures if available, otherwise fall back to RGBA8
+    if (useFloatTextures) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -94,6 +105,12 @@ export function createRenderer(canvas) {
     const fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+
+    // Check framebuffer status
+    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (status !== gl.FRAMEBUFFER_COMPLETE) {
+      console.warn('Framebuffer incomplete:', status);
+    }
 
     return { fbo, tex };
   }
@@ -142,6 +159,30 @@ export function createRenderer(canvas) {
 
     const w = canvas.width;
     const h = canvas.height;
+
+    // Safety check - if FBOs aren't ready, render directly to screen
+    if (!fboScene || !texScene) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, w, h);
+      gl.useProgram(program);
+
+      gl.uniform2f(uniforms.uResolution, w, h);
+      gl.uniform1f(uniforms.uTime, state.time);
+      gl.uniform3fv(uniforms.uCamPos, state.camPos);
+      gl.uniform3fv(uniforms.uCamForward, state.camForward);
+      gl.uniform3fv(uniforms.uCamRight, state.camRight);
+      gl.uniform3fv(uniforms.uCamUp, state.camUp);
+      gl.uniform1f(uniforms.uFocal, state.focal);
+      gl.uniform1i(uniforms.uFractalId, state.fractalId);
+      gl.uniform1i(uniforms.uMaxIter, state.maxIter);
+      gl.uniform1i(uniforms.uMaxSteps, state.maxSteps);
+      gl.uniform1f(uniforms.uFogDensity, state.fogDensity);
+      gl.uniform3fv(uniforms.uPaletteSeed, state.paletteSeed);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      return;
+    }
+
     const bloomW = Math.floor(w / 2);
     const bloomH = Math.floor(h / 2);
 
