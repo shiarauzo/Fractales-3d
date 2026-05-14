@@ -51,9 +51,14 @@ function applyQuality() {
 
 const ui = createUI({
   // Cambiar fractal NO reposiciona la cámara — el usuario usa R para resetear.
-  onChange: (f) => { currentFractal = f; }
+  onChange: (f) => { currentFractal = f; },
+  onZoom: (delta) => {
+    camera.zoom(delta);
+    ui.setFov(camera.getDistance());
+  }
 });
 ui.setIndex(1);
+ui.setFov(camera.getDistance());
 applyQuality();
 
 const input = createInput(canvas, {
@@ -69,6 +74,9 @@ const input = createInput(canvas, {
     if (code === 'Digit1' || code === 'Numpad1') { qualityIdx = 0; applyQuality(); }
     if (code === 'Digit2' || code === 'Numpad2') { qualityIdx = 1; applyQuality(); }
     if (code === 'Digit3' || code === 'Numpad3') { qualityIdx = 2; applyQuality(); }
+    // Zoom controls
+    if (code === 'KeyZ') { camera.zoom(0.1); ui.setFov(camera.getDistance()); }
+    if (code === 'KeyX') { camera.zoom(-0.1); ui.setFov(camera.getDistance()); }
   },
   onLockChange: (locked) => ui.setLockState(locked),
   onSpeed: (mult) => ui.setSpeed(mult)
@@ -91,6 +99,13 @@ function frame(now) {
   const { dx, dy } = input.consumeMouseDelta();
   if (input.isLocked() && (dx !== 0 || dy !== 0)) {
     camera.rotate(dx * MOUSE_SENSITIVITY, -dy * MOUSE_SENSITIVITY);
+  }
+
+  // Handle mouse wheel zoom (Ctrl/Cmd + Scroll)
+  const zoomDelta = input.consumeZoomDelta();
+  if (zoomDelta !== 0) {
+    camera.zoom(-zoomDelta);
+    ui.setFov(camera.getDistance());
   }
 
   const speed = BASE_MOVE_SPEED * input.getSpeedMultiplier() * dt;

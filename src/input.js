@@ -5,6 +5,7 @@ export function createInput(canvas, callbacks = {}) {
   let mouseDX = 0, mouseDY = 0;
   let locked = false;
   let speedMultiplier = 1.0;
+  let zoomDelta = 0;
 
   function isTypingInForm() {
     const a = document.activeElement;
@@ -34,9 +35,16 @@ export function createInput(canvas, callbacks = {}) {
   }
 
   function onWheel(e) {
-    // Solo consumimos el scroll cuando el usuario está "en el juego".
-    if (!locked) return;
     e.preventDefault();
+
+    // Ctrl/Cmd + Scroll = Zoom (works always)
+    if (e.ctrlKey || e.metaKey) {
+      zoomDelta += e.deltaY * 0.002;
+      return;
+    }
+
+    // Regular scroll = speed (only when locked)
+    if (!locked) return;
     const factor = Math.exp(-e.deltaY * 0.001);
     speedMultiplier = Math.max(0.05, Math.min(50, speedMultiplier * factor));
     if (callbacks.onSpeed) callbacks.onSpeed(speedMultiplier);
@@ -77,10 +85,17 @@ export function createInput(canvas, callbacks = {}) {
     return { dx, dy };
   }
 
+  function consumeZoomDelta() {
+    const z = zoomDelta;
+    zoomDelta = 0;
+    return z;
+  }
+
   return {
     keys,
     isLocked: () => locked,
     consumeMouseDelta,
+    consumeZoomDelta,
     getSpeedMultiplier: () => speedMultiplier,
     setSpeedMultiplier: (m) => { speedMultiplier = m; }
   };

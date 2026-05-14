@@ -18,19 +18,29 @@
         <span class="badge" id="qualityLevel">Q2</span>
       </div>
       <div class="hint">
-        <kbd>Click</kbd> capturar mouse ·
-        <kbd>WASD</kbd> mover ·
-        <kbd>Space</kbd>/<kbd>Shift</kbd> subir/bajar ·
-        <kbd>Scroll</kbd> velocidad ·
+        <kbd>Click</kbd> capturar ·
+        <kbd>Mouse</kbd> orbitar ·
+        <kbd>W</kbd>/<kbd>S</kbd> acercar/alejar ·
+        <kbd>A</kbd>/<kbd>D</kbd> pan horizontal ·
+        <kbd>Z</kbd>/<kbd>X</kbd> o <kbd>Ctrl</kbd>+<kbd>Scroll</kbd> zoom ·
         <kbd>+</kbd>/<kbd>-</kbd> fractal ·
-        <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> calidad ·
-        <kbd>R</kbd> reset cámara ·
+        <kbd>R</kbd> reset ·
         <kbd>H</kbd> HUD
       </div>
     </div>
 
     <div id="lockOverlay" class="overlay hidden">
       <div>Click para entrar · Esc para salir</div>
+    </div>
+
+    <div id="formula-panel">
+      <span id="formulaText">z = z^8 + c</span>
+    </div>
+
+    <div id="zoom-controls">
+      <button id="zoomIn" title="Zoom In">+</button>
+      <span id="fovValue">60°</span>
+      <button id="zoomOut" title="Zoom Out">−</button>
     </div>
 
     <script type="module" src="./src/main.js"></script>
